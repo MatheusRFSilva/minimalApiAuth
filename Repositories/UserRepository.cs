@@ -14,7 +14,8 @@ namespace MinimalApiAuth.Repositories
                 new User { Id = 2, Username = "robin", Password = "robin", Role = "employee" }
             };
 
-            return (User)users.Where(x => x.Username.ToLower() == username.ToLower() && x.Password == password);
+            return  users.Where(x => x.Username.ToLower() == username.ToLower() && x.Password == password).FirstOrDefault();
+            
         }
     }
 }

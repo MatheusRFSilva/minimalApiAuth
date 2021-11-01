@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MinimalApiAuth;
+using MinimalApiAuth.Models;
+using MinimalApiAuth.Repositories;
+using MinimalApiAuth.Services;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +39,34 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => "Hello World!");
+app.MapPost ("/login",(User model) => {
+    var user = UserRepository.Get(model.Username, model.Password);
+
+    if (user == null)
+        return Results.NotFound(new { message = "Invalid name or password" });
+
+    var token = TokenService.GenerateToken(user);
+    user.Password = "";
+    return Results.Ok(new
+    {
+        user = user,
+        token = token
+    });
+});
+
+app.MapGet("/anonymous", () => { Results.Ok("anonymous"); })
+    .AllowAnonymous() ;
+
+app.MapGet("/authenticated", (ClaimsPrincipal user) => {
+    Results.Ok(new { message = $"Authenticated as {user.Identity.Name}" });
+}).RequireAuthorization();
+
+app.MapGet("/manager", (ClaimsPrincipal user) => {
+    Results.Ok(new { message = $"Authenticated as {user.Identity.Name}" });
+}).RequireAuthorization("admin");
+
+app.MapGet("/employee", (ClaimsPrincipal user) => {
+    Results.Ok(new { message = $"Authenticated as {user.Identity.Name}" });
+}).RequireAuthorization("employee");
 
 app.Run();
